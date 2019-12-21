@@ -87,7 +87,7 @@ export const ScrollSync = (props = {}) => {
         cio = ch - ih;
     }
     
-    function calc(params) {
+    function calc() {
         
     }
     
@@ -97,6 +97,25 @@ export const ScrollSync = (props = {}) => {
         if (soIn > preSoIn) return true;
         if (soIn < preSoIn) return false;
         return null;
+    }
+    
+    function onContextChanged() {
+        if (ch !== prer.ch || ih !== prer.ih) {
+            if (fnOffsetY > cio) {
+                fnOffsetY = cio;
+            } else if (fnOffsetY < 0) {
+                fnOffsetY = 0;
+            }
+        }
+        if (vph !== prer.vph || ih !== prer.ih) {
+            if (ivpo <= 0) {
+                fnOffsetVpY = 0;
+            } else if (fnOffsetVpY > ivpo) {
+                fnOffsetVpY = ivpo;
+            } else if (fnOffsetVpY < 0) {
+                fnOffsetVpY = 0;
+            }
+        }
     }
     
     function run(params) {
@@ -109,6 +128,7 @@ export const ScrollSync = (props = {}) => {
         isScrollDown = checkIsScrollDown(so, prer.so, prer.isScrollDown);
         if (isNil(fnOffsetVpY)) fnOffsetVpY = 0;
         if (isNil(fnOffsetY)) fnOffsetY = 0;
+        onContextChanged();
         onScroll();
         updatePrer();
     }
