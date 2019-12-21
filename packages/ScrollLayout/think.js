@@ -4,12 +4,19 @@
  ih: innerHeight, (0 <= ih)
  maxso: containerHeight - viewPortHeight, (0 < maxso)
  ivpo: innerHeight - viewPortHeight, (any)
+ cio: container - innerHeight, (0 <= cio)
  so: scrollOffset, (0<= so <= maxso)
- isScrollDown
+ isScrollDown, (true | false),
+ fnIsFixed, (true | false)
+ fnOffsetVpY: innerTopToViewPort, (0 <= fnOffsetVpY <= ivpo, ivpo >=0)
+ fnOffsetY: innerTopToContainer (0 <= fnOffset <= cio)
 */
 
 export const ScrollSync = () => {
-    let vph, ch ,ih ,maxso, ivpo, so;
+    let vph, ch ,ih ,maxso, ivpo, cio, so;
+    let fnIsFixed,
+    let fnOffsetVpY,
+    let fnOffsetY
     let isScrollDown;
     let prer;
     
@@ -26,8 +33,12 @@ export const ScrollSync = () => {
         ih = null;
         maxso = null;
         ivpo = null;
+        cio = null;
         so = null;
         isScrollDown = null;
+        fnIsFixed = null;
+        fnOffsetVpY = null;
+        fnOffsetY = null;
     }
     
     function resetPrer() {
@@ -37,8 +48,12 @@ export const ScrollSync = () => {
             ih: null,
             maxso: null,
             ivpo: null,
+            cio: null,
             so: null,
-            isScrollDown: null
+            isScrollDown: null,
+            fnIsFixed: null,
+            fnOffsetVpY: null,
+            fnOffsetY: null
         };
     }
     
@@ -49,9 +64,19 @@ export const ScrollSync = () => {
             ih,
             maxso,
             ivpo,
+            cio,
             so,
-            isScrollDown
+            isScrollDown,
+            fnIsFixed,
+            fnOffsetVpY,
+            fnOffsetY
         };
+    }
+    
+    function updateVars() {
+        maxso = ch - vph;
+        ivpo = ih- vph;
+        cio = ch - ih;
     }
     
     function calc(params) {
@@ -72,13 +97,21 @@ export const ScrollSync = () => {
         ch = containerHeight;
         ih = innerHeight;
         vph = viewPortHeight;
+        updateVars();
         isScrollDown = checkIsScrollDown(so, prer.so, prer.isScrollDown);
+        if (isNil(fnOffsetVpY)) fnOffsetVpY = 0;
+        if (isNil(fnOffsetY)) fnOffsetY = 0;
         onScroll();
         updatePrer();
     }
     
     function onScroll() {
         if (isNil(isScrollDown)) return;
+        if (ivpo <= 0) {
+            fnOffsetY = so;
+            scrollBaseContainer({ isfixedOnTop: true});
+            return;
+        }
         if (isScrollDown) {
             scrollDown();
         } else {
@@ -86,11 +119,44 @@ export const ScrollSync = () => {
         }
     }
     
-    scrollDown() {
+    function scrollDown() {
+        if (fnOffsetVpY < ivpo) {
+            fnOffsetVpY = so - fnOffsetY;
+            scrollBaseViewPort();
+            return;
+        }
+        fnOffsetY = so - ivpo;
+        scrollBaseContainer();
+    }
+    
+    function scrollUp() {
+        
+    }
+        
+    function scrollBaseViewPort() { // inner sync on container, should not be fixed
+        fnIsFixed = false;
+        
+    }
+        
+    function scrollBaseContainer({ isfixedOnTop } = {}) { // inner sync on viewport, should be fixed
+        fnIsFixed = true;
+        if (isfixedOnTop) {
+            scrollBaseContainerFixedTop();
+            return;
+        }
+        if (isScrollDown) {
+            scrollBaseContainerFixedBottom();
+        } else {
+            scrollBaseContainerFixedTop();
+        }
+        
+    }
+        
+    function scrollBaseContainerFixedTop() {
     
     }
     
-    scrollUp() {
+    function scrollBaseContainerFixedBottom() {
         
     }
         
