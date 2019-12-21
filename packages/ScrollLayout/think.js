@@ -11,14 +11,18 @@
  fnOffsetVpY: innerTopToViewPort, (0 <= fnOffsetVpY <= ivpo, ivpo >=0)
  fnOffsetY: innerTopToContainer (0 <= fnOffset <= cio)
 */
-
-export const ScrollSync = () => {
+/*
+ const { pos = {}, updateInnerContentStyle = () => {} } = props;
+ const { bottom = 10, sideWidth = 300, leftPadding = 48, rightPadding = 48, midPadding = 24, isMainPanel = true } = props.pos || {};
+*/
+export const ScrollSync = (props = {}) => {
     let vph, ch ,ih ,maxso, ivpo, cio, so;
     let fnIsFixed,
     let fnOffsetVpY,
     let fnOffsetY
     let isScrollDown;
     let prer;
+    let _props = props;
     
     reset();
     resetPrer();
@@ -73,6 +77,10 @@ export const ScrollSync = () => {
         };
     }
     
+    updateProps(propsIn = {}) {
+        _props = propsIn;
+    }
+    
     function updateVars() {
         maxso = ch - vph;
         ivpo = ih- vph;
@@ -122,20 +130,38 @@ export const ScrollSync = () => {
     function scrollDown() {
         if (fnOffsetVpY < ivpo) {
             fnOffsetVpY = so - fnOffsetY;
-            scrollBaseViewPort();
-            return;
+            if (fnOffsetVpY > ivpo) {
+                fnOffsetVpY = ivpo;
+            } else {
+                scrollBaseViewPort();
+                return;
+            }
         }
         fnOffsetY = so - ivpo;
         scrollBaseContainer();
     }
     
     function scrollUp() {
-        
+        if (fnOffsetVpY > 0) {
+            fnOffsetVpY = so - fnOffsetY;
+            if (fnOffsetVpY < 0) {
+                fnOffsetVpY = 0;
+            } else {
+                scrollBaseViewPort();
+                return;
+            }
+        }
+        fnOffsetY = so;
+        scrollBaseContainer();
     }
         
     function scrollBaseViewPort() { // inner sync on container, should not be fixed
         fnIsFixed = false;
-        
+        updateInnerStyle({
+            position: 'static',
+            'margin-top': `${fnOffsetY}px`,
+            width: isMainPanel ? '100%' : `${sideWidth}px`
+        });
     }
         
     function scrollBaseContainer({ isfixedOnTop } = {}) { // inner sync on viewport, should be fixed
@@ -149,17 +175,35 @@ export const ScrollSync = () => {
         } else {
             scrollBaseContainerFixedTop();
         }
-        
     }
         
     function scrollBaseContainerFixedTop() {
-    
+        const { bottom = 10, sideWidth = 300, leftPadding = 48, rightPadding = 48, midPadding = 24, isMainPanel = true } = _props.pos || {};
+        updateInnerStyle({
+            position: 'fixed',
+            'margin-top': `${fnOffsetY}px`,
+            width: isMainPanel ? `calc(100% - ${ sideWidth + midPadding + leftPadding + rightPadding }px)` : `${sideWidth}px`,
+            bottom: `${ -1 * ivpo }px`
+        });
     }
     
     function scrollBaseContainerFixedBottom() {
-        
+        const { bottom = 10, sideWidth = 300, leftPadding = 48, rightPadding = 48, midPadding = 24, isMainPanel = true } = _props.pos || {};
+        updateInnerStyle({
+            position: 'fixed',
+            'margin-top': `${fnOffsetY}px`,
+            width: isMainPanel ? `calc(100% - ${ sideWidth + midPadding + leftPadding + rightPadding }px)` : `${sideWidth}px`,
+            bottom: `${bottom}px`
+        });
     }
-        
+    
+    function updateInnerStyle(styleIn) {
+        const { updateInnerContentStyle } = _props;
+        if (updateInnerContentStyle) {
+            updateInnerContentStyle(styleIn);
+        }
+    }
+    
     function isNil(o) {
         return o === null || o === undefined;
     }
